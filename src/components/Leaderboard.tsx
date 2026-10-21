@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import clsx from 'clsx';
 import Avatar from '../assets/avatar.svg';
+import IdenticonAvatar from './IdenticonAvatar';
 import { leaderboardApi, type LeaderboardEntry } from '../lib/api-client';
 import { useWalletStore, selectIsWalletConnected } from '../store/useWalletStore';
 import { LoadingState, ErrorState, EmptyState } from './ui/StatusStates';
@@ -30,6 +31,11 @@ interface LeaderboardUser {
   name: string;
   avatar: string;
   xlm: number;
+  publicAddress?: string;
+}
+
+function isStellarPublicAddress(value: unknown): value is string {
+  return typeof value === 'string' && value.startsWith('G') && value.length >= 56;
 }
 
 function mapEntryToUser(entry: LeaderboardEntry, index: number): LeaderboardUser {
@@ -37,7 +43,8 @@ function mapEntryToUser(entry: LeaderboardEntry, index: number): LeaderboardUser
   const name = entry.username ?? entry.name ?? 'Anonymous';
   const xlm = Number(entry.xlm ?? entry.score ?? 0);
   const avatar = entry.avatar && typeof entry.avatar === 'string' ? entry.avatar : Avatar;
-  return { id, name, avatar, xlm };
+  const publicAddress = isStellarPublicAddress(entry.userId) ? entry.userId : undefined;
+  return { id, name, avatar, xlm, publicAddress };
 }
 
 // ---------------------------------------------------------------------------
@@ -236,7 +243,11 @@ const Leaderboard = () => {
             <div className="order-2 md:order-1 flex flex-col items-center w-full md:w-1/3 group">
               <div className={`relative mb-4 ${TRANSFORM_TRANSITION} md:group-hover:-translate-y-2`}>
                 <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#C0C0C0] shadow-[0_0_20px_rgba(192,192,192,0.2)] z-10 relative bg-[#111827] ring-2 ring-[#C0C0C0]/25 ring-offset-2 ring-offset-[#0A0F1A]">
-                  <img src={rank2.avatar} alt={rank2.name} className="w-full h-full object-cover" />
+                  {rank2.publicAddress ? (
+                    <IdenticonAvatar address={rank2.publicAddress} name={rank2.name} className="w-full h-full" />
+                  ) : (
+                    <img src={rank2.avatar} alt={rank2.name} className="w-full h-full object-cover" />
+                  )}
                 </div>
                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#C0C0C0] to-[#E0E0E0] text-gray-900 text-sm font-extrabold py-1 px-3.5 rounded-full shadow-md z-20 whitespace-nowrap min-w-[32px] text-center border-2 border-[#0A0F1A]">
                   #2
@@ -257,7 +268,11 @@ const Leaderboard = () => {
             <div className="order-1 md:order-2 flex flex-col items-center w-full md:w-1/3 -mt-6 md:-mt-12 z-10 group">
               <div className={`relative mb-5 ${TRANSFORM_TRANSITION} md:group-hover:-translate-y-2`}>
                 <div className="w-32 h-32 rounded-full overflow-hidden border-[5px] border-[#FFD700] shadow-[0_0_30px_rgba(255,215,0,0.3)] z-10 relative bg-[#111827] ring-2 ring-[#FFD700]/30 ring-offset-2 ring-offset-[#0A0F1A]">
-                  <img src={rank1.avatar} alt={rank1.name} className="w-full h-full object-cover" />
+                  {rank1.publicAddress ? (
+                    <IdenticonAvatar address={rank1.publicAddress} name={rank1.name} className="w-full h-full" />
+                  ) : (
+                    <img src={rank1.avatar} alt={rank1.name} className="w-full h-full object-cover" />
+                  )}
                 </div>
                 <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#FFD700] to-[#FDB931] text-gray-900 text-base font-extrabold py-1.5 px-4.5 rounded-full shadow-lg z-20 whitespace-nowrap min-w-[40px] text-center border-2 border-[#0A0F1A]">
                   #1
@@ -284,7 +299,11 @@ const Leaderboard = () => {
             <div className="order-3 md:order-3 flex flex-col items-center w-full md:w-1/3 group">
               <div className={`relative mb-4 ${TRANSFORM_TRANSITION} md:group-hover:-translate-y-2`}>
                 <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#CD7F32] shadow-[0_0_20px_rgba(205,127,50,0.2)] z-10 relative bg-[#111827] ring-2 ring-[#CD7F32]/25 ring-offset-2 ring-offset-[#0A0F1A]">
-                  <img src={rank3.avatar} alt={rank3.name} className="w-full h-full object-cover" />
+                  {rank3.publicAddress ? (
+                    <IdenticonAvatar address={rank3.publicAddress} name={rank3.name} className="w-full h-full" />
+                  ) : (
+                    <img src={rank3.avatar} alt={rank3.name} className="w-full h-full object-cover" />
+                  )}
                 </div>
                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#CD7F32] to-[#B87333] text-white text-sm font-extrabold py-1 px-3.5 rounded-full shadow-md z-20 whitespace-nowrap min-w-[32px] text-center border-2 border-[#0A0F1A]">
                   #3
@@ -342,11 +361,20 @@ const Leaderboard = () => {
                           {virtualRow.index + 4}
                         </span>
                         <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-900 border border-white/10 group-hover:border-cyan-500/30 transition-colors shrink-0">
-                          <img
-                            src={user.avatar}
-                            alt={user.name}
-                            className="w-full h-full object-cover"
-                          />
+                          {user.publicAddress ? (
+                            <IdenticonAvatar
+                              address={user.publicAddress}
+                              name={user.name}
+                              className="w-full h-full"
+                              size={48}
+                            />
+                          ) : (
+                            <img
+                              src={user.avatar}
+                              alt={user.name}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
                         </div>
                         <span className="font-bold text-white text-lg group-hover:text-cyan-200 transition-colors truncate">
                           {user.name}
