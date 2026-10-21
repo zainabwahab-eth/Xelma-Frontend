@@ -86,7 +86,7 @@ describe('Leaderboard identicon avatar', () => {
   it('falls back to the img avatar for an entry without a usable public address', async () => {
     renderLeaderboard();
     await waitFor(() => expect(screen.getByText('Bob')).toBeInTheDocument());
-    const imgs = screen.getAllByTagName('img');
+    const imgs = document.querySelectorAll('img');
     expect(imgs.length).toBeGreaterThanOrEqual(2);
     const identicons = screen.getAllByTestId('identicon-avatar');
     expect(identicons).toHaveLength(1);
