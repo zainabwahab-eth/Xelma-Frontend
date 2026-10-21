@@ -30,6 +30,7 @@ interface LeaderboardUser {
   name: string;
   avatar: string;
   xlm: number;
+  publicAddress?: string;
 }
 
 function mapEntryToUser(entry: LeaderboardEntry, index: number): LeaderboardUser {
@@ -37,7 +38,8 @@ function mapEntryToUser(entry: LeaderboardEntry, index: number): LeaderboardUser
   const name = entry.username ?? entry.name ?? 'Anonymous';
   const xlm = Number(entry.xlm ?? entry.score ?? 0);
   const avatar = entry.avatar && typeof entry.avatar === 'string' ? entry.avatar : Avatar;
-  return { id, name, avatar, xlm };
+  const publicAddress = typeof entry.userId === 'string' ? entry.userId : undefined;
+  return { id, name, avatar, xlm, publicAddress };
 }
 
 // ---------------------------------------------------------------------------
@@ -97,11 +99,11 @@ const Leaderboard = () => {
 
   const currentUser = useMemo(() => {
     if (!walletPublicKey) return null;
-    return sortedUsers.find((u) => u.id === walletPublicKey) ?? null;
+    return sortedUsers.find((u) => Boolean(u.publicAddress) && u.publicAddress === walletPublicKey) ?? null;
   }, [sortedUsers, walletPublicKey]);
 
   const currentUserRank = currentUser
-    ? sortedUsers.findIndex((u) => u.id === currentUser.id) + 1
+    ? sortedUsers.findIndex((u) => Boolean(u.publicAddress) && u.publicAddress === walletPublicKey) + 1
     : null;
 
   const walletShortAddress = walletPublicKey
@@ -314,7 +316,8 @@ const Leaderboard = () => {
             >
               {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                 const user = restUsers[virtualRow.index];
-                const isCurrent = currentUser?.id === user.id;
+                const currentUserAddress = currentUser?.publicAddress;
+                const isCurrent = Boolean(currentUserAddress) && user.publicAddress === currentUserAddress;
 
                 return (
                   <li
